@@ -1,9 +1,7 @@
 package com.example.sweetandkarak.service;
 
-
-
-
 import com.example.sweetandkarak.enums.CafeStatusEnum;
+import com.example.sweetandkarak.exception.ResourceNotFoundException;
 import com.example.sweetandkarak.model.Cafe;
 import com.example.sweetandkarak.repository.CafeRepository;
 import org.springframework.data.domain.Page;
@@ -27,7 +25,7 @@ public class CafeService {
 
     public Cafe getCafeById(Long id) {
         return cafeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cafe not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cafe not found with id: " + id));
     }
 
     public Page<Cafe> getAll(Pageable pageable) {
@@ -80,6 +78,7 @@ public class CafeService {
     }
 
     public void delete(Long id) {
-        cafeRepository.deleteById(id);
+        Cafe cafe = getCafeById(id);
+        cafeRepository.delete(cafe);
     }
 }
