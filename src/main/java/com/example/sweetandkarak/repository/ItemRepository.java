@@ -15,7 +15,13 @@ import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
+    Page<Item> findByCafeId(Long cafeId, Pageable pageable);
 
+    Page<Item> findByItemName(String itemName, Pageable pageable);
 
+    Page<Item> findByCafeIdAndItemName(Long cafeId, String itemName, Pageable pageable);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Item i WHERE i.id = :id")
+    Optional<Item> findByIdWithLock(@Param("id") Long id);
 }
