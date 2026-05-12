@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
@@ -52,4 +53,9 @@ public class Cafe {
     private  int  isActive = 1;
 
 
+    public void setImageUrl(@Nullable String originalFilename) {
+    }
+
+    public void setActive(boolean b) {
+    }
 }
