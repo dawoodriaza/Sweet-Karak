@@ -2,6 +2,7 @@
 package com.example.sweetandkarak.model;
 
 
+import com.example.sweetandkarak.enums.OrderStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,6 +31,9 @@ public class Order {
     private String paymentReference;
 
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    private OrderStatusEnum orderStatus = OrderStatusEnum.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
