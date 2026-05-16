@@ -145,4 +145,12 @@ public class OrderService {
         order.setOrderStatus(OrderStatusEnum.CANCELLED);
         orderRepository.save(order);
     }
+
+    public Order placeOrder(Order order) {
+        return order;
+    };
+
+    public Page<Order> getOrdersByUser(Long userId, Pageable pageable) {
+        return null;
+    };
 }
