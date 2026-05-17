@@ -1,70 +1,79 @@
 package com.example.sweetandkarak.controller;
 
-
-import com.example.sweetandkarak.model.ItemReview;
+import com.example.sweetandkarak.dto.request.ReviewRequest;
+import com.example.sweetandkarak.dto.response.ApiResponse;
+import com.example.sweetandkarak.dto.response.ReviewResponse;
 import com.example.sweetandkarak.service.ReviewService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/reviews")
+@RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    public ReviewController(ReviewService reviewService) {
-        this.reviewService = reviewService;
-    }
-
-
     @PostMapping("/item/{itemId}")
-    public ItemReview addItemReview(
-            @PathVariable Long itemId,
-            @RequestParam Long userId,
-            @RequestParam String description,
-            @RequestParam int rating) {
-
-        return reviewService.addItemReview(itemId, userId, description, rating);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<ReviewResponse>> addItemReview(Principal principal, @PathVariable Long itemId, @Valid @RequestBody ReviewRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Item review added", reviewService.addItemReview(principal.getName(), itemId, request)));
     }
 
-
-
+    @PostMapping("/cafe/{cafeId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<ReviewResponse>> addCafeReview(Principal principal, @PathVariable Long cafeId, @Valid @RequestBody ReviewRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Cafe review added", reviewService.addCafeReview(principal.getName(), cafeId, request)));
+    }
 
     @GetMapping("/item/{itemId}")
-    public Page<ItemReview> getItemReviews(
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getItemReviews(
             @PathVariable Long itemId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return reviewService.getItemReviews(itemId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Item reviews", reviewService.getItemReviews(itemId, pageable)));
     }
 
-
-
-
-    @GetMapping("/user/{userId}")
-    public Page<ItemReview> getUserReviews(
-            @PathVariable Long userId,
+    @GetMapping("/cafe/{cafeId}")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getCafeReviews(
+            @PathVariable Long cafeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return reviewService.getUserReviews(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Cafe reviews", reviewService.getCafeReviews(cafeId, pageable)));
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getMyReviews(
+            Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success("My reviews", reviewService.getUserReviews(principal.getName(), pageable)));
+    }
 
     @DeleteMapping("/item/{reviewId}")
-    public String deleteItemReview(@PathVariable Long reviewId) {
-        reviewService.deleteItemReview(reviewId);
-        return "Item review deleted";
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Object>> deleteItemReview(Principal principal, @PathVariable Long reviewId) {
+        reviewService.deleteItemReview(principal.getName(), reviewId);
+        return ResponseEntity.ok(ApiResponse.success("Item review deleted"));
     }
 
-
-
-
+    @DeleteMapping("/cafe/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Object>> deleteCafeReview(Principal principal, @PathVariable Long reviewId) {
+        reviewService.deleteCafeReview(principal.getName(), reviewId);
+        return ResponseEntity.ok(ApiResponse.success("Cafe review deleted"));
+    }
 }

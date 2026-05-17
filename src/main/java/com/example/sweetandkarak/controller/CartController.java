@@ -1,73 +1,68 @@
 package com.example.sweetandkarak.controller;
 
-import com.example.sweetandkarak.model.Cart;
+import com.example.sweetandkarak.dto.request.CartRequest;
+import com.example.sweetandkarak.dto.response.ApiResponse;
+import com.example.sweetandkarak.dto.response.CartResponse;
 import com.example.sweetandkarak.service.CartService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/cart")
+@RequiredArgsConstructor
 public class CartController {
 
     private final CartService cartService;
 
-    public CartController(CartService cartService) {
-        this.cartService = cartService;
-    }
-
-
     @PostMapping
-    public Cart addToCart(
-            @RequestParam Long userId,
-            @RequestParam Long itemId,
-            @RequestParam Integer quantity) {
-
-        return cartService.addToCart(userId, itemId, quantity);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<CartResponse>> addToCart(@Valid @RequestBody CartRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Item added to cart", cartService.addToCart(request)));
     }
 
-
-    @GetMapping("/user/{userId}")
-    public Page<Cart> getCartByUser(
-            @PathVariable Long userId,
+    @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Page<CartResponse>>> getMyCart(
+            Principal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return cartService.getCartByUser(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Cart items", cartService.getCartByEmail(principal.getName(), pageable)));
     }
-
 
     @PatchMapping("/{cartId}/quantity")
-    public Cart updateCartQuantity(
-            @PathVariable Long cartId,
-            @RequestParam Integer quantity) {
-
-        return cartService.updateCartQuantity(cartId, quantity);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<CartResponse>> updateQuantity(@PathVariable Long cartId, @RequestParam Integer quantity) {
+        return ResponseEntity.ok(ApiResponse.success("Quantity updated", cartService.updateCartQuantity(cartId, quantity)));
     }
-
 
     @DeleteMapping("/{cartId}")
-    public String removeCartItem(@PathVariable Long cartId) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Object>> removeCartItem(@PathVariable Long cartId) {
         cartService.removeCartItem(cartId);
-        return "Cart item removed";
+        return ResponseEntity.ok(ApiResponse.success("Item removed from cart"));
     }
 
-
-    @DeleteMapping("/user/{userId}/clear")
-    public String clearCart(@PathVariable Long userId) {
-        cartService.clearCart(userId);
-        return "Cart cleared";
+    @DeleteMapping("/clear")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Object>> clearCart(Principal principal) {
+        cartService.clearCartByEmail(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Cart cleared"));
     }
 
-
-    @PostMapping("/user/{userId}/checkout")
-    public String checkoutCart(@PathVariable Long userId) {
-        cartService.checkoutCart(userId);
-        return "Checkout successful. Cart cleared.";
+    @PostMapping("/checkout")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Object>> checkout(Principal principal) {
+        cartService.checkoutCart(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Checkout successful"));
     }
-
 }

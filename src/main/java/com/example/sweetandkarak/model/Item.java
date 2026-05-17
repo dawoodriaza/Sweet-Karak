@@ -1,15 +1,11 @@
 package com.example.sweetandkarak.model;
 
-
-
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(name = "items")
-public class Item {
+public class Item extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,23 +35,20 @@ public class Item {
     @Column(name = "quantity_available", nullable = false)
     private Integer quantityAvailable = 0;
 
-    @CreationTimestamp
-    @Column(name="created_on", updatable = false)
-    private LocalDateTime createdOn;
-
-
-    @UpdateTimestamp
-    @Column(name = "updated_on")
-    private LocalDateTime updatedOn;
-
-
-    @Column(name = "is_active")
-    private  int  isActive = 1;
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cafe_id", nullable = false)
     private Cafe cafe;
 
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ItemReview> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Order> orders = new ArrayList<>();
 
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Cart> cartItems = new ArrayList<>();
 }

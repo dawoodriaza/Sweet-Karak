@@ -1,7 +1,5 @@
 package com.example.sweetandkarak.model;
 
-
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +12,7 @@ import java.math.BigDecimal;
 @Builder
 @Entity
 @Table(name = "carts")
-public class Cart  {
+public class Cart extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +24,9 @@ public class Cart  {
     @Column(name = "total_price", precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
@@ -35,5 +35,4 @@ public class Cart  {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cafe_id", nullable = false)
     private Cafe cafe;
-
 }
