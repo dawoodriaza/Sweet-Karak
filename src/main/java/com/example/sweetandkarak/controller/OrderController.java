@@ -1,91 +1,93 @@
 package com.example.sweetandkarak.controller;
 
-
-import com.example.sweetandkarak.model.Order;
+import com.example.sweetandkarak.dto.request.OrderRequest;
+import com.example.sweetandkarak.dto.response.ApiResponse;
+import com.example.sweetandkarak.dto.response.OrderResponse;
 import com.example.sweetandkarak.service.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/orders")
-
+@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
-
 
     @PostMapping
-    public Order placeOrder(@RequestBody Order order) {
-        return orderService.placeOrder(order);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(Principal principal, @Valid @RequestBody OrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Order placed", orderService.placeOrder(principal.getName(), request)));
     }
-
 
     @GetMapping("/{id}")
-    public Order getOrderById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrderById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Order fetched", orderService.getOrderById(id)));
     }
-
 
     @GetMapping
-    public Page<Order> getAllOrders(
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        return orderService.getAllOrders(pageable);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdOn") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(ApiResponse.success("All orders", orderService.getAllOrders(pageable)));
     }
 
-
-    @GetMapping("/user/{userId}")
-    public Page<Order> getOrdersByUser(
-            @PathVariable Long userId,
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getMyOrders(
+            Principal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return orderService.getOrdersByUser(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("My orders", orderService.getOrdersByUser(principal.getName(), pageable)));
     }
 
     @GetMapping("/cafe/{cafeId}")
-    public Page<Order> getOrdersByCafe(
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrdersByCafe(
             @PathVariable Long cafeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return orderService.getOrdersByCafe(cafeId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Cafe orders", orderService.getOrdersByCafe(cafeId, pageable)));
     }
 
     @GetMapping("/status")
-    public Page<Order> getOrdersByStatus(
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrdersByStatus(
             @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Pageable pageable = PageRequest.of(page, size);
-        return orderService.getOrdersByStatus(status, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Orders by status", orderService.getOrdersByStatus(status, pageable)));
     }
-
 
     @PatchMapping("/{id}/status")
-    public Order updateOrderStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
-
-        return orderService.updateOrderStatus(id, status);
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+        return ResponseEntity.ok(ApiResponse.success("Order status updated", orderService.updateOrderStatus(id, status)));
     }
-
 
     @PatchMapping("/{id}/cancel")
-    public String cancelOrder(@PathVariable Long id) {
-        orderService.cancelOrder(id);
-        return "Order cancelled";
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<Object>> cancelOrder(Principal principal, @PathVariable Long id) {
+        orderService.cancelOrder(principal.getName(), id);
+        return ResponseEntity.ok(ApiResponse.success("Order cancelled"));
     }
-
 }

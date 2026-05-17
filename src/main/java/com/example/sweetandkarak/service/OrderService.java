@@ -1,15 +1,19 @@
 package com.example.sweetandkarak.service;
 
+import com.example.sweetandkarak.dto.request.OrderRequest;
+import com.example.sweetandkarak.dto.response.OrderResponse;
 import com.example.sweetandkarak.enums.OrderStatusEnum;
 import com.example.sweetandkarak.exception.InvalidOrderException;
 import com.example.sweetandkarak.exception.ResourceNotFoundException;
 import com.example.sweetandkarak.exception.StockUnavailableException;
+import com.example.sweetandkarak.mapper.OrderMapper;
 import com.example.sweetandkarak.model.Item;
 import com.example.sweetandkarak.model.Order;
-
+import com.example.sweetandkarak.model.User;
 import com.example.sweetandkarak.repository.ItemRepository;
 import com.example.sweetandkarak.repository.OrderRepository;
-
+import com.example.sweetandkarak.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,135 +26,127 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
-
+    private final UserRepository userRepository;
     private final ItemRepository itemRepository;
+    private final OrderMapper orderMapper;
 
-    private final ReentrantLock stockLock = new ReentrantLock();
 
-    public OrderService(OrderRepository orderRepository,
-                        ItemRepository itemRepository) {
-        this.orderRepository = orderRepository;
-        this.itemRepository = itemRepository;
-    }
 
     @Transactional
-    public Order placeOrder(Long itemId, int quantity, String paymentReference) {
+    public OrderResponse placeOrder(String email, OrderRequest request) {
+        log.info("Placing order for user: {}, item: {}, quantity: {}", email, request.getItemId(), request.getOrderQuantity());
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Item item = itemRepository.findByIdWithLock(request.getItemId())
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found with ID: " + request.getItemId()));
 
 
 
-        Item item = itemRepository.findByIdWithLock(itemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Item not found with ID: " + itemId));
-
-        stockLock.lock();
         try {
-
-            if (item.getQuantityAvailable() < quantity) {
+            if (item.getQuantityAvailable() < request.getOrderQuantity()) {
                 throw new StockUnavailableException(
-                        "Insufficient stock. Available: " + item.getQuantityAvailable()
-                                + ", Requested: " + quantity
+                        "Insufficient stock. Available: " + item.getQuantityAvailable() + ", Requested: " + request.getOrderQuantity()
                 );
             }
 
-            item.setQuantityAvailable(item.getQuantityAvailable() - quantity);
+            item.setQuantityAvailable(item.getQuantityAvailable() - request.getOrderQuantity());
             itemRepository.save(item);
+            log.info("Stock deducted for item: {}. Remaining: {}", item.getId(), item.getQuantityAvailable());
 
         } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("Optimistic lock conflict for item: {}", item.getId());
             throw new StockUnavailableException("Order conflict detected. Please try again.");
-        } finally {
-            stockLock.unlock();
         }
 
-        BigDecimal totalPrice = item.getPrice().multiply(BigDecimal.valueOf(quantity));
+        BigDecimal totalPrice = item.getPrice().multiply(BigDecimal.valueOf(request.getOrderQuantity()));
 
-        OrderStatusEnum orderStatus =
-                (paymentReference != null && !paymentReference.isBlank())
-                        ? OrderStatusEnum.PAID
-                        : OrderStatusEnum.FAILED_PAYMENT;
+        boolean paymentSuccessful = simulatePayment(request.getPaymentReference());
+        OrderStatusEnum orderStatus = paymentSuccessful ? OrderStatusEnum.PAID : OrderStatusEnum.FAILED_PAYMENT;
 
         Order order = Order.builder()
+                .user(user)
                 .item(item)
                 .cafe(item.getCafe())
-                .orderQuantity(quantity)
+                .orderQuantity(request.getOrderQuantity())
                 .totalOrderPrice(totalPrice)
-                .paymentReference(paymentReference)
+                .paymentReference(request.getPaymentReference())
                 .orderStatus(orderStatus)
                 .build();
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order placed: #{}, status: {}", savedOrder.getId(), savedOrder.getOrderStatus());
+
+
+        return orderMapper.toResponse(savedOrder);
     }
 
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
+    public OrderResponse getOrderById(Long id) {
+        return orderMapper.toResponse(findOrderById(id));
     }
 
-    public Page<Order> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable).map(orderMapper::toResponse);
     }
 
-
-
-    public Page<Order> getOrdersByCafe(Long cafeId, Pageable pageable) {
-        return orderRepository.findByCafeId(cafeId, (java.awt.print.Pageable) pageable);
+    public Page<OrderResponse> getOrdersByUser(String email, Pageable pageable) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return orderRepository.findByUserId(user.getId(), pageable).map(orderMapper::toResponse);
     }
 
-    public Page<Order> getOrdersByStatus(String status, Pageable pageable) {
-        OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status.toUpperCase());
-        return orderRepository.findByOrderStatus(orderStatus, (java.awt.print.Pageable) pageable);
+    public Page<OrderResponse> getOrdersByCafe(Long cafeId, Pageable pageable) {
+        return orderRepository.findByCafeId(cafeId, pageable).map(orderMapper::toResponse);
     }
 
-    @Transactional
-    public Order updateOrderStatus(Long orderId, String status) {
-
-        Order order = getOrderById(orderId);
-
-        OrderStatusEnum newStatus = OrderStatusEnum.valueOf(status.toUpperCase());
-        order.setOrderStatus(newStatus);
-
-        return orderRepository.save(order);
+    public Page<OrderResponse> getOrdersByStatus(String status, Pageable pageable) {
+        return orderRepository.findByOrderStatus(OrderStatusEnum.valueOf(status.toUpperCase()), pageable).map(orderMapper::toResponse);
     }
 
     @Transactional
-    public void cancelOrder(Long orderId) {
+    public OrderResponse updateOrderStatus(Long orderId, String status) {
+        Order order = findOrderById(orderId);
+        order.setOrderStatus(OrderStatusEnum.valueOf(status.toUpperCase()));
+        Order updatedOrder = orderRepository.save(order);
+        log.info("Order #{} status updated to: {}", orderId, status);
+        return orderMapper.toResponse(updatedOrder);
+    }
 
-        Order order = getOrderById(orderId);
+    @Transactional
+    public void cancelOrder(String email, Long orderId) {
+        Order order = findOrderById(orderId);
 
-        if (order.getOrderStatus() == OrderStatusEnum.DELIVERED
-                || order.getOrderStatus() == OrderStatusEnum.CANCELLED) {
+        if (!order.getUser().getEmail().equals(email)) {
+            throw new InvalidOrderException("You can only cancel your own orders.");
+        }
 
-            throw new InvalidOrderException(
-                    "Cannot cancel order with status: " + order.getOrderStatus()
-            );
+        if (order.getOrderStatus() == OrderStatusEnum.DELIVERED || order.getOrderStatus() == OrderStatusEnum.CANCELLED) {
+            throw new InvalidOrderException("Cannot cancel order with status: " + order.getOrderStatus());
         }
 
         Item item = itemRepository.findByIdWithLock(order.getItem().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
-        stockLock.lock();
-        try {
 
-            item.setQuantityAvailable(
-                    item.getQuantityAvailable() + order.getOrderQuantity()
-            );
 
-            itemRepository.save(item);
 
-        } finally {
-            stockLock.unlock();
-        }
 
         order.setOrderStatus(OrderStatusEnum.CANCELLED);
         orderRepository.save(order);
+        log.info("Order #{} cancelled", orderId);
     }
 
-    public Order placeOrder(Order order) {
-        return order;
-    };
+    private boolean simulatePayment(String paymentReference) {
+        return paymentReference != null && !paymentReference.isBlank();
+    }
 
-    public Page<Order> getOrdersByUser(Long userId, Pageable pageable) {
-        return null;
-    };
+    private Order findOrderById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
+    }
 }
