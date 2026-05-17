@@ -1,84 +1,146 @@
 package com.example.sweetandkarak.service;
 
+import com.example.sweetandkarak.dto.request.CafeCreateRequest;
+import com.example.sweetandkarak.dto.response.CafeResponse;
 import com.example.sweetandkarak.enums.CafeStatusEnum;
+import com.example.sweetandkarak.enums.RoleEnum;
+import com.example.sweetandkarak.exception.DuplicateResourceException;
 import com.example.sweetandkarak.exception.ResourceNotFoundException;
+import com.example.sweetandkarak.mapper.CafeMapper;
 import com.example.sweetandkarak.model.Cafe;
+import com.example.sweetandkarak.model.User;
 import com.example.sweetandkarak.repository.CafeRepository;
+import com.example.sweetandkarak.repository.UserRepository;
+import com.example.sweetandkarak.util.FileUploadUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class CafeService {
 
     private final CafeRepository cafeRepository;
+    private final UserRepository userRepository;
+    private final CafeMapper cafeMapper;
 
-    public CafeService(CafeRepository cafeRepository) {
-        this.cafeRepository = cafeRepository;
+
+    @Value("${app.admin.email}")
+    private String systemAdminEmail;
+
+    @Transactional
+    public CafeResponse createCafe(CafeCreateRequest request) {
+        if (cafeRepository.existsByCafeName(request.getCafeName())) {
+            throw new DuplicateResourceException("Cafe name already exists: " + request.getCafeName());
+        }
+
+        User cafeAdmin = userRepository.findById(request.getCafeAdminId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getCafeAdminId()));
+
+        if (cafeAdmin.getRole() == RoleEnum.CUSTOMER || cafeAdmin.getRole() == RoleEnum.NON_SIGNED_UP_CUSTOMER) {
+            cafeAdmin.setRole(RoleEnum.CAFE_ADMIN);
+            userRepository.save(cafeAdmin);
+            log.info("User {} promoted to CAFE_ADMIN", cafeAdmin.getId());
+        }
+
+        Cafe cafe = cafeMapper.toEntity(request, cafeAdmin);
+        Cafe savedCafe = cafeRepository.save(cafe);
+        log.info("Cafe created: {}, status: PENDING_APPROVAL", savedCafe.getId());
+
+
+        return cafeMapper.toResponse(savedCafe);
     }
 
-    public Cafe createCafe(Cafe cafe) {
-        cafe.setCafeStatus(CafeStatusEnum.PENDING_APPROVAL);
-        return cafeRepository.save(cafe);
+    public CafeResponse getCafeById(Long id) {
+        return cafeMapper.toResponse(findById(id));
     }
 
-    public Cafe getCafeById(Long id) {
-        return cafeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cafe not found with id: " + id));
+    public Page<CafeResponse> getAllCafes(Pageable pageable) {
+        return cafeRepository.findAll(pageable).map(cafeMapper::toResponse);
     }
 
-    public Page<Cafe> getAll(Pageable pageable) {
-        return cafeRepository.findAll(pageable);
+    public Page<CafeResponse> searchCafesByName(String name, Pageable pageable) {
+        return cafeRepository.findByCafeName(name, pageable).map(cafeMapper::toResponse);
     }
 
-    public Page<Cafe> search(String name, Pageable pageable) {
-        return cafeRepository.findByCafeName(name, pageable);
+    public Page<CafeResponse> getCafesByAdminEmail(String email, Pageable pageable) {
+        User admin = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return cafeRepository.findByCafeAdminId(admin.getId(), pageable).map(cafeMapper::toResponse);
     }
 
-    public Page<Cafe> getByAdmin(Long adminId, Pageable pageable) {
-        return cafeRepository.findByCafeAdminId(adminId, pageable);
+    public Page<CafeResponse> getCafesByStatus(String status, Pageable pageable) {
+        return cafeRepository.findByCafeStatus(CafeStatusEnum.valueOf(status.toUpperCase()), pageable)
+                .map(cafeMapper::toResponse);
     }
 
-    public Page<Cafe> getByStatus(String status, Pageable pageable) {
-        return cafeRepository.findByCafeStatus(
-                CafeStatusEnum.valueOf(status),
-                pageable
-        );
+    @Transactional
+    public CafeResponse uploadCafeImage(Long id, MultipartFile file) {
+        Cafe cafe = findById(id);
+        try {
+
+
+            log.info("Cafe image updated: {}", id);
+            return cafeMapper.toResponse(cafeRepository.save(cafe));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save cafe image to disk");
+        }
     }
 
-    public Cafe uploadImage(Long id, MultipartFile file) {
-        Cafe cafe = getCafeById(id);
-        cafe.setImageUrl(file.getOriginalFilename());
-        return cafeRepository.save(cafe);
-    }
-
-    public Cafe approve(Long id) {
-        Cafe cafe = getCafeById(id);
+    @Transactional
+    public CafeResponse approveCafe(Long id) {
+        Cafe cafe = findById(id);
         cafe.setCafeStatus(CafeStatusEnum.APPROVED);
-        return cafeRepository.save(cafe);
+        Cafe updated = cafeRepository.save(cafe);
+
+        log.info("Cafe approved: {}", id);
+        return cafeMapper.toResponse(updated);
     }
 
-    public Cafe reject(Long id) {
-        Cafe cafe = getCafeById(id);
+    @Transactional
+    public CafeResponse rejectCafe(Long id) {
+        Cafe cafe = findById(id);
         cafe.setCafeStatus(CafeStatusEnum.REJECTED);
-        return cafeRepository.save(cafe);
+        Cafe updated = cafeRepository.save(cafe);
+
+        log.info("Cafe rejected: {}", id);
+        return cafeMapper.toResponse(updated);
     }
 
-    public void activate(Long id) {
-        Cafe cafe = getCafeById(id);
-        cafe.setActive(true);
+    @Transactional
+    public void activateCafe(Long id) {
+        Cafe cafe = findById(id);
+        cafe.setIsActive(1);
         cafeRepository.save(cafe);
+        log.info("Cafe activated: {}", id);
     }
 
-    public void deactivate(Long id) {
-        Cafe cafe = getCafeById(id);
-        cafe.setActive(false);
+    @Transactional
+    public void deactivateCafe(Long id) {
+        Cafe cafe = findById(id);
+        cafe.setIsActive(0);
         cafeRepository.save(cafe);
+        log.info("Cafe deactivated: {}", id);
     }
 
-    public void delete(Long id) {
-        Cafe cafe = getCafeById(id);
-        cafeRepository.delete(cafe);
+    @Transactional
+    public void deleteCafe(Long id) {
+        cafeRepository.delete(findById(id));
+        log.info("Cafe deleted: {}", id);
+    }
+
+    private Cafe findById(Long id) {
+        return cafeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cafe not found with ID: " + id));
     }
 }

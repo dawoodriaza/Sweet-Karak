@@ -36,6 +36,9 @@ public class Cafe extends BaseEntity {
     @Column(name = "cafe_status", nullable = false)
     private CafeStatusEnum cafeStatus = CafeStatusEnum.PENDING_APPROVAL;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cafe_admin_id", nullable = false)
+    private User cafeAdmin;
 
     @OneToMany(mappedBy = "cafe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Item> items = new ArrayList<>();
