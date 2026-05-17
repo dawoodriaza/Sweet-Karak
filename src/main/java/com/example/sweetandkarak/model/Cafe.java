@@ -1,14 +1,11 @@
 package com.example.sweetandkarak.model;
 
-
 import com.example.sweetandkarak.enums.CafeStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.jspecify.annotations.Nullable;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,9 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name= "cafe")
-public class Cafe {
-
+@Table(name = "cafes")
+public class Cafe extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,27 +31,21 @@ public class Cafe {
 
     @Column(name = "rating_out_of_5_star")
     private Double ratingOutOf5Star = 0.0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "cafe_status", nullable = false)
     private CafeStatusEnum cafeStatus = CafeStatusEnum.PENDING_APPROVAL;
 
-    @CreationTimestamp
-    @Column(name="created_on", updatable = false)
-    private LocalDateTime createdOn;
 
+    @OneToMany(mappedBy = "cafe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Item> items = new ArrayList<>();
 
-    @UpdateTimestamp
-    @Column(name = "updated_on")
-    private LocalDateTime updatedOn;
+    @OneToMany(mappedBy = "cafe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Order> orders = new ArrayList<>();
 
+    @OneToMany(mappedBy = "cafe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ItemReview> itemReviews = new ArrayList<>();
 
-    @Column(name = "is_active")
-    private  int  isActive = 1;
-
-
-    public void setImageUrl(@Nullable String originalFilename) {
-    }
-
-    public void setActive(boolean b) {
-    }
+    @OneToMany(mappedBy = "cafe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<CafeReview> cafeReviews = new ArrayList<>();
 }
