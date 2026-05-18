@@ -34,7 +34,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final OrderMapper orderMapper;
-
+    private final EmailService emailService;
     private final OrderConcurrencyManager concurrency;
 
     @Transactional
@@ -85,7 +85,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Order placed: #{}, status: {}", savedOrder.getId(), savedOrder.getOrderStatus());
 
-
+        emailService.sendOrderConfirmationEmail(user.getEmail(), user.getFullName(), savedOrder.getId(), item.getItemName());
 
         return orderMapper.toResponse(savedOrder);
     }
