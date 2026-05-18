@@ -1,6 +1,6 @@
 package com.example.sweetandkarak.service;
 
-
+import com.example.sweetandkarak.config.OrderConcurrencyManager;
 import com.example.sweetandkarak.dto.request.OrderRequest;
 import com.example.sweetandkarak.dto.response.OrderResponse;
 import com.example.sweetandkarak.enums.OrderStatusEnum;
@@ -35,7 +35,7 @@ public class OrderService {
     private final ItemRepository itemRepository;
     private final OrderMapper orderMapper;
 
-
+    private final OrderConcurrencyManager concurrency;
 
     @Transactional
     public OrderResponse placeOrder(String email, OrderRequest request) {
@@ -47,8 +47,8 @@ public class OrderService {
         Item item = itemRepository.findByIdWithLock(request.getItemId())
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found with ID: " + request.getItemId()));
 
-
-
+        ReentrantLock stockLock = concurrency.getItemStockLock(item.getId());
+        stockLock.lock();
         try {
             if (item.getQuantityAvailable() < request.getOrderQuantity()) {
                 throw new StockUnavailableException(
@@ -63,6 +63,8 @@ public class OrderService {
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("Optimistic lock conflict for item: {}", item.getId());
             throw new StockUnavailableException("Order conflict detected. Please try again.");
+        } finally {
+            stockLock.unlock();
         }
 
         BigDecimal totalPrice = item.getPrice().multiply(BigDecimal.valueOf(request.getOrderQuantity()));
@@ -82,6 +84,7 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Order placed: #{}, status: {}", savedOrder.getId(), savedOrder.getOrderStatus());
+
 
 
         return orderMapper.toResponse(savedOrder);
@@ -133,8 +136,15 @@ public class OrderService {
         Item item = itemRepository.findByIdWithLock(order.getItem().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
-
-
+        ReentrantLock stockLock = concurrency.getItemStockLock(item.getId());
+        stockLock.lock();
+        try {
+            item.setQuantityAvailable(item.getQuantityAvailable() + order.getOrderQuantity());
+            itemRepository.save(item);
+            log.info("Stock restored for item: {} after cancellation", item.getId());
+        } finally {
+            stockLock.unlock();
+        }
 
         order.setOrderStatus(OrderStatusEnum.CANCELLED);
         orderRepository.save(order);
