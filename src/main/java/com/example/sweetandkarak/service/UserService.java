@@ -39,7 +39,7 @@ public class UserService {
     }
 
     public Page<UserResponse> searchUsersByName(String name, Pageable pageable) {
-        return userRepository.findByFullNameContainingIgnoreCase(name, pageable).map(userMapper::toResponse);
+        return userRepository.findByFullName(name, pageable).map(userMapper::toResponse);
     }
 
     @Transactional

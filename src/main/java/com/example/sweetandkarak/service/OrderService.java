@@ -1,5 +1,6 @@
 package com.example.sweetandkarak.service;
 
+
 import com.example.sweetandkarak.dto.request.OrderRequest;
 import com.example.sweetandkarak.dto.response.OrderResponse;
 import com.example.sweetandkarak.enums.OrderStatusEnum;
@@ -131,7 +132,6 @@ public class OrderService {
 
         Item item = itemRepository.findByIdWithLock(order.getItem().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
-
 
 
 

@@ -32,6 +32,7 @@ public class CafeService {
     private final UserRepository userRepository;
     private final CafeMapper cafeMapper;
 
+    private final FileUploadUtil fileUploadUtil;
 
     @Value("${app.admin.email}")
     private String systemAdminEmail;
@@ -86,8 +87,10 @@ public class CafeService {
     public CafeResponse uploadCafeImage(Long id, MultipartFile file) {
         Cafe cafe = findById(id);
         try {
-
-
+            if (cafe.getCafeImage() != null) {
+                fileUploadUtil.deleteFile(cafe.getCafeImage());
+            }
+            cafe.setCafeImage(fileUploadUtil.saveFile(file, "cafe"));
             log.info("Cafe image updated: {}", id);
             return cafeMapper.toResponse(cafeRepository.save(cafe));
         } catch (IllegalArgumentException e) {

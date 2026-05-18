@@ -10,7 +10,7 @@ import com.example.sweetandkarak.model.Cafe;
 import com.example.sweetandkarak.model.Item;
 import com.example.sweetandkarak.repository.CafeRepository;
 import com.example.sweetandkarak.repository.ItemRepository;
-
+import com.example.sweetandkarak.util.FileUploadUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,7 +29,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final CafeRepository cafeRepository;
     private final ItemMapper itemMapper;
-
+    private final FileUploadUtil fileUploadUtil;
 
     @Transactional
     public ItemResponse createItem(ItemCreateRequest request) {
@@ -77,7 +77,25 @@ public class ItemService {
         return itemMapper.toResponse(updatedItem);
     }
 
-
+    @Transactional
+    public ItemResponse uploadItemImage(Long id, MultipartFile file) {
+        Item item = findItemById(id);
+        try {
+            if (item.getItemImage() != null) {
+                fileUploadUtil.deleteFile(item.getItemImage());
+            }
+            String filePath = fileUploadUtil.saveFile(file, "item");
+            item.setItemImage(filePath);
+            Item updatedItem = itemRepository.save(item);
+            log.info("Item image updated for item: {}", id);
+            return itemMapper.toResponse(updatedItem);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        } catch (IOException e) {
+            log.error("Failed to upload item image for item {}: {}", id, e.getMessage());
+            throw new RuntimeException("Failed to save item image to disk");
+        }
+    }
 
     @Transactional
     public void activateItem(Long id) {

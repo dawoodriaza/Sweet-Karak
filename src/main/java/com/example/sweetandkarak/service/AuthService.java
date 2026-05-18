@@ -27,7 +27,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
-    private final EmailService emailService;
+
 
     @Transactional
     public AuthResponse signup(UserSignupRequest request) {
@@ -46,7 +46,7 @@ public class AuthService {
         userRepository.save(user);
         log.info("User registered: {}", user.getEmail());
 
-        emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
+
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtil.generateToken(userDetails, user.getRole().name());
