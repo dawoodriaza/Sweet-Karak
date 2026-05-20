@@ -31,7 +31,7 @@ public class CafeService {
     private final CafeRepository cafeRepository;
     private final UserRepository userRepository;
     private final CafeMapper cafeMapper;
-
+    private final EmailService emailService;
     private final FileUploadUtil fileUploadUtil;
 
     @Value("${app.admin.email}")
@@ -56,7 +56,7 @@ public class CafeService {
         Cafe savedCafe = cafeRepository.save(cafe);
         log.info("Cafe created: {}, status: PENDING_APPROVAL", savedCafe.getId());
 
-
+        emailService.sendCafeRequestSubmittedEmail(cafeAdmin.getEmail(), savedCafe.getCafeName());
         return cafeMapper.toResponse(savedCafe);
     }
 
@@ -105,7 +105,7 @@ public class CafeService {
         Cafe cafe = findById(id);
         cafe.setCafeStatus(CafeStatusEnum.APPROVED);
         Cafe updated = cafeRepository.save(cafe);
-
+        emailService.sendCafeApprovedEmail(cafe.getCafeAdmin().getEmail(), cafe.getCafeName());
         log.info("Cafe approved: {}", id);
         return cafeMapper.toResponse(updated);
     }
@@ -115,7 +115,7 @@ public class CafeService {
         Cafe cafe = findById(id);
         cafe.setCafeStatus(CafeStatusEnum.REJECTED);
         Cafe updated = cafeRepository.save(cafe);
-
+        emailService.sendCafeRejectedEmail(cafe.getCafeAdmin().getEmail(), cafe.getCafeName());
         log.info("Cafe rejected: {}", id);
         return cafeMapper.toResponse(updated);
     }
