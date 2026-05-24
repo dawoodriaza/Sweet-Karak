@@ -53,16 +53,20 @@ public class ItemService {
         return itemRepository.findAll(pageable).map(itemMapper::toResponse);
     }
 
-    public Page<ItemResponse> getItemsByCafe(Long cafeId, Pageable pageable) {
+    public Page<ItemResponse> getActiveItemsByCafe(Long cafeId, Pageable pageable) {
+        return itemRepository.findByCafeIdAndIsActive(cafeId, 1, pageable).map(itemMapper::toResponse);
+    }
+
+    public Page<ItemResponse> getAllItemsByCafe(Long cafeId, Pageable pageable) {
         return itemRepository.findByCafeId(cafeId, pageable).map(itemMapper::toResponse);
     }
 
-    public Page<ItemResponse> searchItemsByName(String name, Pageable pageable) {
-        return itemRepository.findByItemName(name, pageable).map(itemMapper::toResponse);
+    public Page<ItemResponse> searchActiveItems(String name, Pageable pageable) {
+        return itemRepository.findByItemNameIsActive(name, 1, pageable).map(itemMapper::toResponse);
     }
 
-    public Page<ItemResponse> searchItemsByCafeAndName(Long cafeId, String name, Pageable pageable) {
-        return itemRepository.findByCafeIdAndItemName(cafeId, name, pageable).map(itemMapper::toResponse);
+    public Page<ItemResponse> searchActiveItemsByCafe(Long cafeId, String name, Pageable pageable) {
+        return itemRepository.findByCafeIdAndItemName(cafeId, name, 1, pageable).map(itemMapper::toResponse);
     }
 
     @Transactional

@@ -25,10 +25,21 @@ public class CafeController {
 
     private final CafeService cafeService;
 
-    @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<CafeResponse>> createCafe(@Valid @RequestBody CafeCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Cafe request submitted. Pending approval.", cafeService.createCafe(request)));
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<CafeResponse>>> getPublicCafes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdOn").descending());
+        return ResponseEntity.ok(ApiResponse.success("Cafes fetched", cafeService.getPublicCafes(pageable)));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<CafeResponse>>> searchPublicCafes(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success("Search results", cafeService.searchPublicCafes(name, pageable)));
     }
 
     @GetMapping("/{id}")
@@ -36,24 +47,13 @@ public class CafeController {
         return ResponseEntity.ok(ApiResponse.success("Cafe fetched", cafeService.getCafeById(id)));
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<CafeResponse>>> getAllCafes(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdOn") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(ApiResponse.success("Cafes fetched", cafeService.getAllCafes(pageable)));
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<CafeResponse>>> searchCafes(
-            @RequestParam String name,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success("Search results", cafeService.searchCafesByName(name, pageable)));
+    @PostMapping
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<CafeResponse>> createCafe(
+            @Valid @RequestBody CafeCreateRequest request,
+            Principal principal) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Cafe request submitted. Pending approval.", cafeService.createCafe(request, principal.getName())));
     }
 
     @GetMapping("/my")
@@ -64,6 +64,18 @@ public class CafeController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(ApiResponse.success("My cafes", cafeService.getCafesByAdminEmail(principal.getName(), pageable)));
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Page<CafeResponse>>> getAllCafesAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdOn") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(ApiResponse.success("All cafes", cafeService.getAllCafesAdmin(pageable)));
     }
 
     @GetMapping("/status")
@@ -78,7 +90,9 @@ public class CafeController {
 
     @PostMapping("/{id}/image")
     @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<CafeResponse>> uploadCafeImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse<CafeResponse>> uploadCafeImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(ApiResponse.success("Cafe image uploaded", cafeService.uploadCafeImage(id, file)));
     }
 

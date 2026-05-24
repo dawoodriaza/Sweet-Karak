@@ -14,8 +14,11 @@ import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
+    Page<Item> findByCafeIdAndIsActive(Long cafeId, Integer isActive, Pageable pageable);
     Page<Item> findByCafeId(Long cafeId, Pageable pageable);
+    Page<Item> findByItemNameIsActive(String itemName, Integer isActive, Pageable pageable);
     Page<Item> findByItemName(String itemName, Pageable pageable);
+    Page<Item> findByCafeIdAndItemName(Long cafeId, String itemName, Integer isActive, Pageable pageable);
     Page<Item> findByCafeIdAndItemName(Long cafeId, String itemName, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

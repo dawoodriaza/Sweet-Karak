@@ -23,35 +23,13 @@ public class ItemController {
 
     private final ItemService itemService;
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<ItemResponse>> createItem(@Valid @RequestBody ItemCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Item created", itemService.createItem(request)));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ItemResponse>> getItemById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Item fetched", itemService.getItemById(id)));
-    }
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<ItemResponse>>> getAllItems(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdOn") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(ApiResponse.success("Items fetched", itemService.getAllItems(pageable)));
-    }
-
     @GetMapping("/cafe/{cafeId}")
-    public ResponseEntity<ApiResponse<Page<ItemResponse>>> getItemsByCafe(
+    public ResponseEntity<ApiResponse<Page<ItemResponse>>> getActiveItemsByCafe(
             @PathVariable Long cafeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success("Items by cafe", itemService.getItemsByCafe(cafeId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success("Items fetched", itemService.getActiveItemsByCafe(cafeId, pageable)));
     }
 
     @GetMapping("/search")
@@ -62,20 +40,45 @@ public class ItemController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ItemResponse> items = (cafeId != null)
-                ? itemService.searchItemsByCafeAndName(cafeId, name, pageable)
-                : itemService.searchItemsByName(name, pageable);
+                ? itemService.searchActiveItemsByCafe(cafeId, name, pageable)
+                : itemService.searchActiveItems(name, pageable);
         return ResponseEntity.ok(ApiResponse.success("Search results", items));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ItemResponse>> getItemById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Item fetched", itemService.getItemById(id)));
+    }
+
+    @GetMapping("/admin/cafe/{cafeId}")
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Page<ItemResponse>>> getAllItemsByCafeAdmin(
+            @PathVariable Long cafeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success("Items fetched", itemService.getAllItemsByCafe(cafeId, pageable)));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<ItemResponse>> createItem(@Valid @RequestBody ItemCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Item created", itemService.createItem(request)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<ItemResponse>> updateItem(@PathVariable Long id, @Valid @RequestBody ItemCreateRequest request) {
+    public ResponseEntity<ApiResponse<ItemResponse>> updateItem(
+            @PathVariable Long id,
+            @Valid @RequestBody ItemCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Item updated", itemService.updateItem(id, request)));
     }
 
     @PostMapping("/{id}/image")
     @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<ItemResponse>> uploadItemImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse<ItemResponse>> uploadItemImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(ApiResponse.success("Item image uploaded", itemService.uploadItemImage(id, file)));
     }
 

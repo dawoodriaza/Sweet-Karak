@@ -11,6 +11,8 @@ import java.util.List;
 
 @Repository
 public interface CafeRepository extends JpaRepository<Cafe, Long> {
+    Page<Cafe> findByCafeStatusAndIsActive(CafeStatusEnum status, Integer isActive, Pageable pageable);
+    Page<Cafe> findByCafeNameIsActive(String name, CafeStatusEnum status, Integer isActive, Pageable pageable);
     Page<Cafe> findByCafeName(String cafeName, Pageable pageable);
     Page<Cafe> findByCafeStatus(CafeStatusEnum status, Pageable pageable);
     Page<Cafe> findByCafeAdminId(Long adminId, Pageable pageable);

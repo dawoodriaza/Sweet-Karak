@@ -6,6 +6,7 @@ import com.example.sweetandkarak.enums.CafeStatusEnum;
 import com.example.sweetandkarak.enums.RoleEnum;
 import com.example.sweetandkarak.exception.DuplicateResourceException;
 import com.example.sweetandkarak.exception.ResourceNotFoundException;
+import com.example.sweetandkarak.exception.UnauthorizedActionException;
 import com.example.sweetandkarak.mapper.CafeMapper;
 import com.example.sweetandkarak.model.Cafe;
 import com.example.sweetandkarak.model.User;
@@ -38,18 +39,16 @@ public class CafeService {
     private String systemAdminEmail;
 
     @Transactional
-    public CafeResponse createCafe(CafeCreateRequest request) {
-        if (cafeRepository.existsByCafeName(request.getCafeName())) {
-            throw new DuplicateResourceException("Cafe name already exists: " + request.getCafeName());
+    public CafeResponse createCafe(CafeCreateRequest request, String email) {
+        User cafeAdmin = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (cafeAdmin.getRole() != RoleEnum.CAFE_ADMIN && cafeAdmin.getRole() != RoleEnum.SYSTEM_ADMIN) {
+            throw new UnauthorizedActionException("Only cafe admins can create cafes.");
         }
 
-        User cafeAdmin = userRepository.findById(request.getCafeAdminId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getCafeAdminId()));
-
-        if (cafeAdmin.getRole() == RoleEnum.CUSTOMER || cafeAdmin.getRole() == RoleEnum.NON_SIGNED_UP_CUSTOMER) {
-            cafeAdmin.setRole(RoleEnum.CAFE_ADMIN);
-            userRepository.save(cafeAdmin);
-            log.info("User {} promoted to CAFE_ADMIN", cafeAdmin.getId());
+        if (cafeRepository.existsByCafeName(request.getCafeName())) {
+            throw new DuplicateResourceException("Cafe name already exists: " + request.getCafeName());
         }
 
         Cafe cafe = cafeMapper.toEntity(request, cafeAdmin);
@@ -64,12 +63,18 @@ public class CafeService {
         return cafeMapper.toResponse(findById(id));
     }
 
-    public Page<CafeResponse> getAllCafes(Pageable pageable) {
-        return cafeRepository.findAll(pageable).map(cafeMapper::toResponse);
+    public Page<CafeResponse> getPublicCafes(Pageable pageable) {
+        return cafeRepository.findByCafeStatusAndIsActive(CafeStatusEnum.APPROVED, 1, pageable)
+                .map(cafeMapper::toResponse);
     }
 
-    public Page<CafeResponse> searchCafesByName(String name, Pageable pageable) {
-        return cafeRepository.findByCafeName(name, pageable).map(cafeMapper::toResponse);
+    public Page<CafeResponse> searchPublicCafes(String name, Pageable pageable) {
+        return cafeRepository.findByCafeNameIsActive(name, CafeStatusEnum.APPROVED, 1, pageable)
+                .map(cafeMapper::toResponse);
+    }
+
+    public Page<CafeResponse> getAllCafesAdmin(Pageable pageable) {
+        return cafeRepository.findAll(pageable).map(cafeMapper::toResponse);
     }
 
     public Page<CafeResponse> getCafesByAdminEmail(String email, Pageable pageable) {
