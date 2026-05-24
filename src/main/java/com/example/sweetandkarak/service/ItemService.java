@@ -62,11 +62,11 @@ public class ItemService {
     }
 
     public Page<ItemResponse> searchActiveItems(String name, Pageable pageable) {
-        return itemRepository.findByItemNameIsActive(name, 1, pageable).map(itemMapper::toResponse);
+        return itemRepository.findByItemNameAndIsActive(name, 1, pageable).map(itemMapper::toResponse);
     }
 
     public Page<ItemResponse> searchActiveItemsByCafe(Long cafeId, String name, Pageable pageable) {
-        return itemRepository.findByCafeIdAndItemName(cafeId, name, 1, pageable).map(itemMapper::toResponse);
+        return itemRepository.findByCafeIdAndItemNameAndIsActive(cafeId, name, 1, pageable).map(itemMapper::toResponse);
     }
 
     @Transactional

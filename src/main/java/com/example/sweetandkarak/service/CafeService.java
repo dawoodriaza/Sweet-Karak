@@ -64,12 +64,12 @@ public class CafeService {
     }
 
     public Page<CafeResponse> getPublicCafes(Pageable pageable) {
-        return cafeRepository.findByCafeStatusAndIsActive(CafeStatusEnum.APPROVED, 1, pageable)
+        return cafeRepository.findPublicCafes(CafeStatusEnum.APPROVED, 1, pageable)
                 .map(cafeMapper::toResponse);
     }
 
     public Page<CafeResponse> searchPublicCafes(String name, Pageable pageable) {
-        return cafeRepository.findByCafeNameIsActive(name, CafeStatusEnum.APPROVED, 1, pageable)
+        return cafeRepository.findPublicCafesByName(name, CafeStatusEnum.APPROVED, 1, pageable)
                 .map(cafeMapper::toResponse);
     }
 
@@ -142,9 +142,41 @@ public class CafeService {
     }
 
     @Transactional
+    public void activateCafeByOwner(Long id, String email) {
+        Cafe cafe = findById(id);
+        checkOwnership(cafe, email);
+        cafe.setIsActive(1);
+        cafeRepository.save(cafe);
+        log.info("Cafe {} activated by owner {}", id, email);
+    }
+
+    @Transactional
+    public void deactivateCafeByOwner(Long id, String email) {
+        Cafe cafe = findById(id);
+        checkOwnership(cafe, email);
+        cafe.setIsActive(0);
+        cafeRepository.save(cafe);
+        log.info("Cafe {} deactivated by owner {}", id, email);
+    }
+
+    @Transactional
+    public void deleteCafeByOwner(Long id, String email) {
+        Cafe cafe = findById(id);
+        checkOwnership(cafe, email);
+        cafeRepository.delete(cafe);
+        log.info("Cafe {} deleted by owner {}", id, email);
+    }
+
+    @Transactional
     public void deleteCafe(Long id) {
         cafeRepository.delete(findById(id));
         log.info("Cafe deleted: {}", id);
+    }
+
+    private void checkOwnership(Cafe cafe, String email) {
+        if (!cafe.getCafeAdmin().getEmail().equals(email)) {
+            throw new UnauthorizedActionException("You can only manage your own cafes.");
+        }
     }
 
     private Cafe findById(Long id) {

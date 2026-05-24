@@ -66,6 +66,35 @@ public class CafeController {
         return ResponseEntity.ok(ApiResponse.success("My cafes", cafeService.getCafesByAdminEmail(principal.getName(), pageable)));
     }
 
+    @PostMapping("/{id}/image")
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<CafeResponse>> uploadCafeImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success("Cafe image uploaded", cafeService.uploadCafeImage(id, file)));
+    }
+
+    @PatchMapping("/{id}/my/activate")
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> activateCafeByOwner(@PathVariable Long id, Principal principal) {
+        cafeService.activateCafeByOwner(id, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Cafe activated"));
+    }
+
+    @PatchMapping("/{id}/my/deactivate")
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> deactivateCafeByOwner(@PathVariable Long id, Principal principal) {
+        cafeService.deactivateCafeByOwner(id, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Cafe deactivated"));
+    }
+
+    @DeleteMapping("/{id}/my")
+    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> deleteCafeByOwner(@PathVariable Long id, Principal principal) {
+        cafeService.deleteCafeByOwner(id, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Cafe deleted"));
+    }
+
     @GetMapping("/admin/all")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<ApiResponse<Page<CafeResponse>>> getAllCafesAdmin(
@@ -86,14 +115,6 @@ public class CafeController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(ApiResponse.success("Cafes by status", cafeService.getCafesByStatus(status, pageable)));
-    }
-
-    @PostMapping("/{id}/image")
-    @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<CafeResponse>> uploadCafeImage(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success("Cafe image uploaded", cafeService.uploadCafeImage(id, file)));
     }
 
     @PatchMapping("/{id}/approve")
