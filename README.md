@@ -464,7 +464,7 @@ Then restart the app and the DataSeeder repopulates everything.
 
 ### Auth
 
-Base path: `/api/auth` — all public, no token required.
+Base path: `/api/auth` : all public, no token required.
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -485,7 +485,7 @@ Signup request:
 }
 ```
 
-Signup response — returns a message string, not a token. The user must verify email first:
+Signup response : returns a message string, not a token. The user must verify email first:
 
 ```json
 {
@@ -590,7 +590,7 @@ Public endpoints return only APPROVED cafes with isActive = 1. Status labels are
 | PATCH | /api/cafes/{id}/deactivate | SYSTEM_ADMIN | Deactivate any cafe |
 | DELETE | /api/cafes/{id} | SYSTEM_ADMIN | Delete any cafe |
 
-Create cafe request — the admin is taken from JWT, no cafeAdminId needed:
+Create cafe request : the admin is taken from JWT, no cafeAdminId needed:
 
 ```json
 {
@@ -645,7 +645,7 @@ Items can only be added to cafes with status APPROVED. Adding to a pending or re
 
 ### Cart
 
-Base path: `/api/cart` — CUSTOMER only.
+Base path: `/api/cart` : CUSTOMER only.
 
 | Method | Endpoint | Description |
 |---|---|---|
