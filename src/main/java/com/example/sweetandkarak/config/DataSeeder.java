@@ -186,7 +186,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Item item1 = Item.builder()
                 .itemName("Classic Karak Tea")
-                .itemDescription("Traditional sweet spiced karak tea")
+                .itemDescription("Traditional sweet spiced karak tea brewed to perfection")
                 .price(new BigDecimal("0.500"))
                 .quantityAvailable(200)
                 .cafe(cafeApproved1)
@@ -195,7 +195,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Item item2 = Item.builder()
                 .itemName("Saffron Karak")
-                .itemDescription("Karak tea with premium saffron")
+                .itemDescription("Premium karak infused with authentic saffron strands")
                 .price(new BigDecimal("0.800"))
                 .quantityAvailable(100)
                 .cafe(cafeApproved1)
@@ -204,7 +204,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Item item3 = Item.builder()
                 .itemName("Karak Latte")
-                .itemDescription("Creamy karak with milk foam")
+                .itemDescription("Creamy karak topped with rich milk foam")
                 .price(new BigDecimal("1.000"))
                 .quantityAvailable(150)
                 .cafe(cafeApproved1)
@@ -212,51 +212,96 @@ public class DataSeeder implements CommandLineRunner {
         itemRepository.save(item3);
 
         Item item4 = Item.builder()
-                .itemName("Karak Cappuccino")
-                .itemDescription("Espresso style karak")
+                .itemName("Kunafa Slice")
+                .itemDescription("Classic shredded pastry filled with sweet cheese and soaked in sugar syrup")
                 .price(new BigDecimal("1.200"))
-                .quantityAvailable(0)
+                .quantityAvailable(60)
                 .cafe(cafeApproved1)
                 .build();
-        item4.setIsActive(0);
         itemRepository.save(item4);
 
         Item item5 = Item.builder()
-                .itemName("Cardamom Karak")
-                .itemDescription("Karak with extra cardamom")
-                .price(new BigDecimal("0.600"))
-                .quantityAvailable(180)
-                .cafe(cafeApproved2)
+                .itemName("Luqaimat")
+                .itemDescription("Traditional Bahraini sweet dumplings drizzled with date syrup and sesame")
+                .price(new BigDecimal("0.750"))
+                .quantityAvailable(80)
+                .cafe(cafeApproved1)
                 .build();
         itemRepository.save(item5);
 
         Item item6 = Item.builder()
-                .itemName("Rose Karak")
-                .itemDescription("Karak with rose water")
-                .price(new BigDecimal("0.700"))
-                .quantityAvailable(120)
-                .cafe(cafeApproved2)
+                .itemName("Karak Cappuccino")
+                .itemDescription("Espresso-style karak with a thick foam layer")
+                .price(new BigDecimal("1.200"))
+                .quantityAvailable(0)
+                .cafe(cafeApproved1)
                 .build();
+        item6.setIsActive(0);
         itemRepository.save(item6);
 
         Item item7 = Item.builder()
-                .itemName("Mint Karak")
-                .itemDescription("Karak with fresh mint")
-                .price(new BigDecimal("0.650"))
-                .quantityAvailable(90)
+                .itemName("Cardamom Karak")
+                .itemDescription("Karak with an extra hit of freshly ground cardamom")
+                .price(new BigDecimal("0.600"))
+                .quantityAvailable(180)
                 .cafe(cafeApproved2)
                 .build();
         itemRepository.save(item7);
 
         Item item8 = Item.builder()
+                .itemName("Rose Karak")
+                .itemDescription("Delicate karak with rose water and dried rose petals")
+                .price(new BigDecimal("0.700"))
+                .quantityAvailable(120)
+                .cafe(cafeApproved2)
+                .build();
+        itemRepository.save(item8);
+
+        Item item9 = Item.builder()
+                .itemName("Mint Karak")
+                .itemDescription("Refreshing karak with fresh mint leaves")
+                .price(new BigDecimal("0.650"))
+                .quantityAvailable(90)
+                .cafe(cafeApproved2)
+                .build();
+        itemRepository.save(item9);
+
+        Item item10 = Item.builder()
+                .itemName("Basbousa")
+                .itemDescription("Soft semolina cake soaked in rosewater syrup topped with almonds")
+                .price(new BigDecimal("0.800"))
+                .quantityAvailable(70)
+                .cafe(cafeApproved2)
+                .build();
+        itemRepository.save(item10);
+
+        Item item11 = Item.builder()
+                .itemName("Date Cake")
+                .itemDescription("Moist sticky cake made with Bahraini dates and caramel sauce")
+                .price(new BigDecimal("1.000"))
+                .quantityAvailable(50)
+                .cafe(cafeApproved2)
+                .build();
+        itemRepository.save(item11);
+
+        Item item12 = Item.builder()
+                .itemName("Halwa Shaameya")
+                .itemDescription("Traditional Bahraini sweet made with starch, saffron and rosewater")
+                .price(new BigDecimal("0.900"))
+                .quantityAvailable(40)
+                .cafe(cafeApproved2)
+                .build();
+        itemRepository.save(item12);
+
+        Item item13 = Item.builder()
                 .itemName("Ginger Karak")
-                .itemDescription("Karak with fresh ginger")
+                .itemDescription("Warming karak with fresh ginger and a touch of black pepper")
                 .price(new BigDecimal("0.750"))
                 .quantityAvailable(0)
                 .cafe(cafeApproved2)
                 .build();
-        item8.setIsActive(0);
-        itemRepository.save(item8);
+        item13.setIsActive(0);
+        itemRepository.save(item13);
 
         Order orderDelivered1 = Order.builder()
                 .user(customer1)
@@ -282,7 +327,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Order orderPaid = Order.builder()
                 .user(customer3)
-                .item(item5)
+                .item(item7)
                 .cafe(cafeApproved2)
                 .orderQuantity(3)
                 .totalOrderPrice(new BigDecimal("1.800"))
@@ -304,7 +349,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Order orderPending = Order.builder()
                 .user(customer2)
-                .item(item6)
+                .item(item8)
                 .cafe(cafeApproved2)
                 .orderQuantity(2)
                 .totalOrderPrice(new BigDecimal("1.400"))
@@ -315,7 +360,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Order orderCancelled = Order.builder()
                 .user(customer3)
-                .item(item7)
+                .item(item9)
                 .cafe(cafeApproved2)
                 .orderQuantity(1)
                 .totalOrderPrice(new BigDecimal("0.650"))
@@ -324,7 +369,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
         orderRepository.save(orderCancelled);
 
-        Order orderFailedPayment = Order.builder()
+        Order orderFailed = Order.builder()
                 .user(customer1)
                 .item(item1)
                 .cafe(cafeApproved1)
@@ -333,7 +378,7 @@ public class DataSeeder implements CommandLineRunner {
                 .paymentReference(null)
                 .orderStatus(OrderStatusEnum.FAILED_PAYMENT)
                 .build();
-        orderRepository.save(orderFailedPayment);
+        orderRepository.save(orderFailed);
 
         Cart cart1 = Cart.builder()
                 .user(customer1)
@@ -346,16 +391,16 @@ public class DataSeeder implements CommandLineRunner {
 
         Cart cart2 = Cart.builder()
                 .user(customer1)
-                .item(item2)
+                .item(item4)
                 .cafe(cafeApproved1)
                 .quantity(1)
-                .totalPrice(new BigDecimal("0.800"))
+                .totalPrice(new BigDecimal("1.200"))
                 .build();
         cartRepository.save(cart2);
 
         Cart cart3 = Cart.builder()
                 .user(customer2)
-                .item(item5)
+                .item(item7)
                 .cafe(cafeApproved2)
                 .quantity(3)
                 .totalPrice(new BigDecimal("1.800"))
@@ -364,129 +409,114 @@ public class DataSeeder implements CommandLineRunner {
 
         Cart cart4 = Cart.builder()
                 .user(customer3)
-                .item(item6)
+                .item(item10)
                 .cafe(cafeApproved2)
                 .quantity(1)
-                .totalPrice(new BigDecimal("0.700"))
+                .totalPrice(new BigDecimal("0.800"))
                 .build();
         cartRepository.save(cart4);
 
         ItemReview ir1 = ItemReview.builder()
-                .user(customer1)
-                .item(item1)
-                .cafe(cafeApproved1)
-                .rating(5)
-                .reviewDescription("Best karak in Bahrain, highly recommend!")
+                .user(customer1).item(item1).cafe(cafeApproved1)
+                .rating(5).reviewDescription("Best karak in Bahrain, highly recommend!")
                 .build();
         itemReviewRepository.save(ir1);
 
         ItemReview ir2 = ItemReview.builder()
-                .user(customer2)
-                .item(item1)
-                .cafe(cafeApproved1)
-                .rating(4)
-                .reviewDescription("Really good, will order again")
+                .user(customer2).item(item1).cafe(cafeApproved1)
+                .rating(4).reviewDescription("Really good, will order again")
                 .build();
         itemReviewRepository.save(ir2);
 
         ItemReview ir3 = ItemReview.builder()
-                .user(customer3)
-                .item(item1)
-                .cafe(cafeApproved1)
-                .rating(3)
-                .reviewDescription("Good but could be sweeter")
+                .user(customer3).item(item1).cafe(cafeApproved1)
+                .rating(3).reviewDescription("Good but could be sweeter")
                 .build();
         itemReviewRepository.save(ir3);
 
         ItemReview ir4 = ItemReview.builder()
-                .user(customer1)
-                .item(item2)
-                .cafe(cafeApproved1)
-                .rating(5)
-                .reviewDescription("Saffron makes it special")
+                .user(customer1).item(item2).cafe(cafeApproved1)
+                .rating(5).reviewDescription("Saffron makes it feel luxurious")
                 .build();
         itemReviewRepository.save(ir4);
 
         ItemReview ir5 = ItemReview.builder()
-                .user(customer2)
-                .item(item5)
-                .cafe(cafeApproved2)
-                .rating(4)
-                .reviewDescription("Great cardamom flavor")
+                .user(customer2).item(item4).cafe(cafeApproved1)
+                .rating(5).reviewDescription("The kunafa is absolutely amazing, so fresh!")
                 .build();
         itemReviewRepository.save(ir5);
 
         ItemReview ir6 = ItemReview.builder()
-                .user(customer3)
-                .item(item6)
-                .cafe(cafeApproved2)
-                .rating(2)
-                .reviewDescription("Rose flavor too strong for me")
+                .user(customer3).item(item5).cafe(cafeApproved1)
+                .rating(4).reviewDescription("Luqaimat was crispy and delicious")
                 .build();
         itemReviewRepository.save(ir6);
 
+        ItemReview ir7 = ItemReview.builder()
+                .user(customer1).item(item7).cafe(cafeApproved2)
+                .rating(5).reviewDescription("Great cardamom flavor, very authentic")
+                .build();
+        itemReviewRepository.save(ir7);
+
+        ItemReview ir8 = ItemReview.builder()
+                .user(customer2).item(item10).cafe(cafeApproved2)
+                .rating(4).reviewDescription("Basbousa was moist and perfectly sweet")
+                .build();
+        itemReviewRepository.save(ir8);
+
+        ItemReview ir9 = ItemReview.builder()
+                .user(customer3).item(item11).cafe(cafeApproved2)
+                .rating(5).reviewDescription("Date cake is rich and absolutely divine")
+                .build();
+        itemReviewRepository.save(ir9);
+
         CafeReview cr1 = CafeReview.builder()
-                .user(customer1)
-                .cafe(cafeApproved1)
-                .rating(5)
-                .reviewDescription("Amazing place, best karak in Bahrain")
+                .user(customer1).cafe(cafeApproved1)
+                .rating(5).reviewDescription("Amazing place, best karak in Bahrain")
                 .build();
         cafeReviewRepository.save(cr1);
 
         CafeReview cr2 = CafeReview.builder()
-                .user(customer2)
-                .cafe(cafeApproved1)
-                .rating(4)
-                .reviewDescription("Nice atmosphere and fast service")
+                .user(customer2).cafe(cafeApproved1)
+                .rating(4).reviewDescription("Nice atmosphere and fast service")
                 .build();
         cafeReviewRepository.save(cr2);
 
         CafeReview cr3 = CafeReview.builder()
-                .user(customer3)
-                .cafe(cafeApproved1)
-                .rating(5)
-                .reviewDescription("My go-to karak spot")
+                .user(customer3).cafe(cafeApproved1)
+                .rating(5).reviewDescription("My go-to karak spot in Manama")
                 .build();
         cafeReviewRepository.save(cr3);
 
         CafeReview cr4 = CafeReview.builder()
-                .user(customer1)
-                .cafe(cafeApproved2)
-                .rating(4)
-                .reviewDescription("Good variety of karak options")
+                .user(customer1).cafe(cafeApproved2)
+                .rating(4).reviewDescription("Good variety of karak and sweets options")
                 .build();
         cafeReviewRepository.save(cr4);
 
         CafeReview cr5 = CafeReview.builder()
-                .user(customer2)
-                .cafe(cafeApproved2)
-                .rating(3)
-                .reviewDescription("Decent but not the best")
+                .user(customer2).cafe(cafeApproved2)
+                .rating(3).reviewDescription("Decent but service could be faster")
                 .build();
         cafeReviewRepository.save(cr5);
 
         CafeReview cr6 = CafeReview.builder()
-                .user(customer3)
-                .cafe(cafeApproved2)
-                .rating(4)
-                .reviewDescription("Fresh ingredients, good quality")
+                .user(customer3).cafe(cafeApproved2)
+                .rating(4).reviewDescription("Fresh ingredients and great quality sweets")
                 .build();
         cafeReviewRepository.save(cr6);
 
         log.info("Database seeded successfully.");
-        log.info("-------------------------------------");
-        log.info("SYSTEM_ADMIN   admin@sweetkarak.com     / admin123");
-        log.info("CAFE_ADMIN 1  mohammed@sweetkarak.com  / 123456");
-        log.info("CAFE_ADMIN 2   sara@sweetkarak.com      / 123456");
-        log.info("CAFE_ADMIN 3   khalid@sweetkarak.com    / 123456");
-        log.info("CUSTOMER 1   ahmad@gmail.com           / 123456");
-        log.info("CUSTOMER 2   fatima@gmail.com          / 123456");
-        log.info("CUSTOMER 3  yusuf@gmail.com           / 123456");
-        log.info("INACTIVE USER  inactive@gmail.com        / 123456");
-        log.info("CAFES: 2 APPROVED, 2 PENDING_APPROVAL, 1 REJECTED, 1 INACTIVE");
-        log.info("ITEMS: 6 active, 2 inactive (out of stock)");
-        log.info("ORDERS: DELIVERED x2, PAID, PREPARING, PENDING, CANCELLED, FAILED_PAYMENT");
-        log.info("CART: 4 cart entries across 3 customers");
-        log.info("REVIEWS: 6 item reviews, 6 cafe reviews");
+        log.info("SYSTEM_ADMIN  -> admin@sweetkarak.com / admin123");
+        log.info("CAFE_ADMIN 1  -> mohammed@sweetkarak.com / 123456");
+        log.info("CAFE_ADMIN 2  sara@sweetkarak.com / 123456");
+        log.info("CAFE_ADMIN 3   khalid@sweetkarak.com / 123456");
+        log.info("CUSTOMER 1    - ahmad@gmail.com / 123456");
+        log.info("CUSTOMER 2     fatima@gmail.com / 123456");
+        log.info("CUSTOMER 3    yusuf@gmail.com / 123456");
+
+        log.info("Cafes: 2 APPROVED, 2 PENDING, 1 REJECTED, 1 INACTIVE");
+        log.info("Items: 11 active (karak + sweets), 2 inactive");
+        log.info("Orders: DELIVERED x2, PAID, PREPARING, PENDING, CANCELLED, FAILED_PAYMENT");
     }
 }

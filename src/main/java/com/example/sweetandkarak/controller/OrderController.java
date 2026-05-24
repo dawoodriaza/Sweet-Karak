@@ -26,8 +26,11 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(Principal principal, @Valid @RequestBody OrderRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Order placed", orderService.placeOrder(principal.getName(), request)));
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(
+            Principal principal,
+            @Valid @RequestBody OrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Order placed", orderService.placeOrder(principal.getName(), request)));
     }
 
     @GetMapping("/{id}")
@@ -49,7 +52,7 @@ public class OrderController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER','CAFE_ADMIN','SYSTEM_ADMIN')")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getMyOrders(
             Principal principal,
             @RequestParam(defaultValue = "0") int page,
@@ -80,13 +83,17 @@ public class OrderController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('CAFE_ADMIN','SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
         return ResponseEntity.ok(ApiResponse.success("Order status updated", orderService.updateOrderStatus(id, status)));
     }
 
     @PatchMapping("/{id}/cancel")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse<Object>> cancelOrder(Principal principal, @PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Object>> cancelOrder(
+            Principal principal,
+            @PathVariable Long id) {
         orderService.cancelOrder(principal.getName(), id);
         return ResponseEntity.ok(ApiResponse.success("Order cancelled"));
     }
