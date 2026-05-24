@@ -1,6 +1,5 @@
 package com.example.sweetandkarak.repository;
 
-import com.example.sweetandkarak.enums.RoleEnum;
 import com.example.sweetandkarak.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +12,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    Page<User> findByFullName(String fullName, Pageable pageable);
-    Page<User> findByRole(RoleEnum role, Pageable pageable);
-    Page<User> findByIsActive(Integer isActive, Pageable pageable);
+    Page<User> findByFullNameContainingIgnoreCase(String fullName, Pageable pageable);
+    Optional<User> findByVerificationToken(String token);
+    Optional<User> findByResetPasswordToken(String token);
 }

@@ -39,6 +39,15 @@ public class User extends BaseEntity {
     @Column(name = "role", nullable = false)
     private RoleEnum role;
 
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
     @OneToMany(mappedBy = "cafeAdmin", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Cafe> cafes = new ArrayList<>();
 
