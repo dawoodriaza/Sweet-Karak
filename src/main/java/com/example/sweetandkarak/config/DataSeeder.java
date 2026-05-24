@@ -54,6 +54,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("admin123"))
                 .phoneNumber("39000000")
                 .role(RoleEnum.SYSTEM_ADMIN)
+                .emailVerified(true)
                 .build();
         userRepository.save(admin);
 
@@ -63,6 +64,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39001111")
                 .role(RoleEnum.CAFE_ADMIN)
+                .emailVerified(true)
                 .build();
         userRepository.save(cafeAdmin1);
 
@@ -72,6 +74,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39002222")
                 .role(RoleEnum.CAFE_ADMIN)
+                .emailVerified(true)
                 .build();
         userRepository.save(cafeAdmin2);
 
@@ -81,6 +84,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39003333")
                 .role(RoleEnum.CAFE_ADMIN)
+                .emailVerified(true)
                 .build();
         userRepository.save(cafeAdmin3);
 
@@ -90,6 +94,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39004444")
                 .role(RoleEnum.CUSTOMER)
+                .emailVerified(true)
                 .build();
         userRepository.save(customer1);
 
@@ -99,6 +104,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39005555")
                 .role(RoleEnum.CUSTOMER)
+                .emailVerified(true)
                 .build();
         userRepository.save(customer2);
 
@@ -108,6 +114,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39006666")
                 .role(RoleEnum.CUSTOMER)
+                .emailVerified(true)
                 .build();
         userRepository.save(customer3);
 
@@ -117,6 +124,7 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("123456"))
                 .phoneNumber("39007777")
                 .role(RoleEnum.CUSTOMER)
+                .emailVerified(true)
                 .build();
         inactiveUser.setIsActive(0);
         userRepository.save(inactiveUser);
@@ -466,21 +474,19 @@ public class DataSeeder implements CommandLineRunner {
         cafeReviewRepository.save(cr6);
 
         log.info("Database seeded successfully.");
-
-        log.info("SYSTEM_ADMIN  -> admin@sweetkarak.com     / admin123");
-        log.info("CAFE_ADMIN 1  -> mohammed@sweetkarak.com  / 123456");
-        log.info("CAFE_ADMIN 2  -> sara@sweetkarak.com      / 123456");
-        log.info("CAFE_ADMIN 3  -> khalid@sweetkarak.com    / 123456");
-        log.info("CUSTOMER 1    -> ahmad@gmail.com           / 123456");
-        log.info("CUSTOMER 2    -> fatima@gmail.com          / 123456");
-        log.info("CUSTOMER 3    -> yusuf@gmail.com           / 123456");
-        log.info("INACTIVE USER -> inactive@gmail.com        / 123456");
-
+        log.info("-------------------------------------");
+        log.info("SYSTEM_ADMIN   admin@sweetkarak.com     / admin123");
+        log.info("CAFE_ADMIN 1  mohammed@sweetkarak.com  / 123456");
+        log.info("CAFE_ADMIN 2   sara@sweetkarak.com      / 123456");
+        log.info("CAFE_ADMIN 3   khalid@sweetkarak.com    / 123456");
+        log.info("CUSTOMER 1   ahmad@gmail.com           / 123456");
+        log.info("CUSTOMER 2   fatima@gmail.com          / 123456");
+        log.info("CUSTOMER 3  yusuf@gmail.com           / 123456");
+        log.info("INACTIVE USER  inactive@gmail.com        / 123456");
         log.info("CAFES: 2 APPROVED, 2 PENDING_APPROVAL, 1 REJECTED, 1 INACTIVE");
         log.info("ITEMS: 6 active, 2 inactive (out of stock)");
         log.info("ORDERS: DELIVERED x2, PAID, PREPARING, PENDING, CANCELLED, FAILED_PAYMENT");
         log.info("CART: 4 cart entries across 3 customers");
         log.info("REVIEWS: 6 item reviews, 6 cafe reviews");
-
     }
 }
